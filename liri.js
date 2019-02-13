@@ -1,12 +1,12 @@
 require("dotenv").config();
-var apiKey = require("./keys.js");
+var keys = require("./keys.js");
 var axios = require("axios");
 var fs = require("fs");
 var moment = require("moment");
 var Spotify = require("node-spotify-api");
 var userCommand = process.argv[2];
 var userInput = process.argv.slice(3).join(" ");
-var spotify = new Spotify(keys.spotify);
+
 
 switch (userCommand) {
   case "concert-this":
@@ -23,7 +23,12 @@ switch (userCommand) {
     break;
 }
 
+
+
 function movie() {
+  if(!userInput) {
+    userInput = "Mr.Nobody";
+  }
   var queryUrl = "http://www.omdbapi.com/?t=" + userInput + "&y=&plot=short&apikey=trilogy";
 
   axios.get(queryUrl).then(function (response) {
@@ -47,25 +52,38 @@ function concert() {
       console.log("Venue Name: " + res.data[i].venue.name);
       console.log("Venue Location: " + res.data[i].venue.city + ", " + res.data[i].venue.country);
       console.log("Date: " + moment(res.data[i].datetime).format("L"));
+      console.log("========================================");
     }
   })
 }
 
 function spotify() {
-  spotify.search({type: "track", query: userInput}, function(err, data){
+  if (!userInput) {
+    userInput = 'The Sign';
+  }
+  var spotify = new Spotify(keys.spotify);
+
+  spotify.search({ type: 'track', query: userInput, limit:2 }, function(err, data){
     if(err) {
       console.log(err);
     }
     console.log(data);
+    console.log("Artist Name: " + data.tracks.items[0].artists[0].name);
+    console.log("Song Name: " + data.tracks.items[0].name);
+    console.log("Preview Link: " + data.tracks.items[0].preview_url);
+    console.log("Album Name: " + data.tracks.items[0].album.name);
   })
 }
 
 function doWhatItSays() {
 fs.readFile("./random.txt", "utf8", function(err, data){
   if(err) {
-    console.log(err) 
+    return console.log(err) 
   }
-  
+    var arr = data.split(",");
+    userCommand = arr[0];
+    userInput = arr[1];
+    spotify();
 })
 }
 
